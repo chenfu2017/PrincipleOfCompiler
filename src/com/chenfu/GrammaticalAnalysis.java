@@ -11,12 +11,13 @@ public class GrammaticalAnalysis {
     private static ArrayList<String> candidates = new ArrayList<>();
     private static Map<Character, Set<Character>> firstmap = new HashMap<>();
     private static Map<Character, Set<Character>> followmap = new HashMap<>();
+    private static HashMap<Character, Integer> productionMap = new HashMap<>();
     private static HashMap<Character, Integer> candidateMap = new HashMap<>();
     private static String[][] table;
 
     public static void main(String[] args) throws Exception {
         String path = "C:\\Users\\chenfu\\Documents\\2.txt";
-        String expression="i+i+i";
+        String expression = "i*i*i";
         initExpression(path);
         eliminateRecursion(productions, candidates);
         initFirstMap();
@@ -173,6 +174,8 @@ public class GrammaticalAnalysis {
         int n = 0, m = productions.size();
         for (int i = 0; i < productions.size(); i++) {
             String candidate = candidates.get(i);
+            Character production = productions.get(i);
+            productionMap.put(production, i);
             char[] chars = candidate.toCharArray();
             for (char c : chars) {
                 if (!Character.isUpperCase(c) && c != '@' && c != '|') {
@@ -182,8 +185,8 @@ public class GrammaticalAnalysis {
             }
         }
         candidateMap.put('#', n);
-        n = n +1;
-        System.out.println(productions);
+        n = n + 1;
+        System.out.println(productionMap);
         System.out.println(candidateMap);
         table = new String[m][n];
         for (int i = 0; i < m; i++) {
@@ -191,16 +194,16 @@ public class GrammaticalAnalysis {
             String strcandidates = candidates.get(i);
             String[] strings = strcandidates.split("\\|");
             Set<Character> firsts = firstmap.get(production);
-            if(firsts.contains('@')){
+            if (firsts.contains('@')) {
                 Set<Character> follows = followmap.get(production);
-                for(Character character:follows){
+                for (Character character : follows) {
                     int j = candidateMap.get(character);
-                    table[i][j]=production+"->@";
+                    table[i][j] = production + "->@";
                 }
             }
             for (String s : strings) {
                 char c = s.charAt(0);
-                if (c=='@'){
+                if (c == '@') {
                     continue;
                 }
                 if (Character.isUpperCase(c)) {
@@ -216,15 +219,15 @@ public class GrammaticalAnalysis {
         }
     }
 
-    private static void showTable(String[][] table){
-        if(table==null){
+    private static void showTable(String[][] table) {
+        if (table == null) {
             System.out.println("table is null");
             return;
         }
-        for(int i =0;i<table.length;i++){
+        for (int i = 0; i < table[0].length; i++) {
             for (Map.Entry<Character, Integer> entry : candidateMap.entrySet()) {
                 if (entry.getValue() == i) {
-                    System.out.print(entry.getKey()+"       ");
+                    System.out.print(entry.getKey() + "      ");
                 }
             }
         }
@@ -237,7 +240,47 @@ public class GrammaticalAnalysis {
         }
     }
 
-    private static void analysis(String expression){
-
+    private static void analysis(String expression) {
+        expression = expression + "#";
+        char[] charArray = expression.toCharArray();
+        int index = 0;
+        Stack<Character> stack = new Stack<>();
+        stack.push('#');
+        stack.push('E');
+        boolean flag = true;
+        while (flag) {
+            Character c = stack.pop();
+            if(c=='#') {
+                if (c == charArray[index]) {
+                    flag = false;
+                } else {
+                    System.out.println("ERROR");
+                    return;
+                }
+            } else if (!Character.isUpperCase(c)) {
+                if (c == charArray[index]) {
+                    index += 1;
+                }else {
+                    System.out.println("ERROR");
+                    return;
+                }
+            }else {
+                int i = productionMap.get(c);
+                int j = candidateMap.get(charArray[index]);
+                String s = table[i][j];
+                if (s == null) {
+                    System.out.println("ERROR");
+                    return;
+                }
+                s=s.substring(s.indexOf('>')+1);
+                if(!s.equals("@")){
+                    char[] toCharArray = s.toCharArray();
+                    for(int k = toCharArray.length-1;k>=0;k--){
+                        stack.push(toCharArray[k]);
+                    }
+                }
+            }
+        }
+        System.out.println("SUCCESS");
     }
 }
