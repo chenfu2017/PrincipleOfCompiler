@@ -251,6 +251,7 @@ public class GrammaticalAnalysis {
         stack.push('E');
         boolean flag = true;
         while (flag) {
+            System.out.println(String.format("%-24s%24s", stack,queue));
             Character c = stack.pop();
             if(c=='#') {
                 if (c == queue.poll()) {
