@@ -17,7 +17,7 @@ public class GrammaticalAnalysis {
 
     public static void main(String[] args) throws Exception {
         String path = "C:\\Users\\chenfu\\Documents\\2.txt";
-        String expression = "i*i*i";
+        String expression = "(i*i*i)";
         initExpression(path);
         eliminateRecursion(productions, candidates);
         initFirstMap();
@@ -55,9 +55,8 @@ public class GrammaticalAnalysis {
     }
 
     private static void initExpression(String path) {
-        FileReader fileReader = null;
         try {
-            fileReader = new FileReader(path);
+            FileReader fileReader = new FileReader(path);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String s = "";
             while ((s = bufferedReader.readLine()) != null) {
@@ -250,8 +249,10 @@ public class GrammaticalAnalysis {
         stack.push('#');
         stack.push('E');
         boolean flag = true;
+        int count = 0;
         while (flag) {
-            System.out.println(String.format("%-24s%24s", stack,queue));
+            count ++;
+            System.out.println(String.format("%-12d%-36s%24s",count,stack,queue));
             Character c = stack.pop();
             if(c=='#') {
                 if (c == queue.poll()) {
