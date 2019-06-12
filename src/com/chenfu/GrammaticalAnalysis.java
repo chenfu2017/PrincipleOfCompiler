@@ -242,31 +242,31 @@ public class GrammaticalAnalysis {
 
     private static void analysis(String expression) {
         expression = expression + "#";
-        char[] charArray = expression.toCharArray();
-        int index = 0;
         Stack<Character> stack = new Stack<>();
+        Queue<Character> queue = new ArrayDeque<Character>();
+        for (int i = 0; i < expression.length(); i++) {
+            queue.add(expression.charAt(i));
+        }
         stack.push('#');
         stack.push('E');
         boolean flag = true;
         while (flag) {
             Character c = stack.pop();
             if(c=='#') {
-                if (c == charArray[index]) {
+                if (c == queue.poll()) {
                     flag = false;
                 } else {
                     System.out.println("ERROR");
                     return;
                 }
             } else if (!Character.isUpperCase(c)) {
-                if (c == charArray[index]) {
-                    index += 1;
-                }else {
+                if (c != queue.poll()) {
                     System.out.println("ERROR");
                     return;
                 }
             }else {
                 int i = productionMap.get(c);
-                int j = candidateMap.get(charArray[index]);
+                int j = candidateMap.get(queue.peek());
                 String s = table[i][j];
                 if (s == null) {
                     System.out.println("ERROR");
