@@ -16,7 +16,7 @@ public class GrammaticalAnalysis {
     private static String[][] table;
 
     public static void main(String[] args) throws Exception {
-        String path = "C:\\Users\\chenfu\\Documents\\2.txt";
+        String path = "sources/2.txt";
         String expression = "(i*i*i)";
         initExpression(path);
         eliminateRecursion(productions, candidates);
@@ -185,8 +185,6 @@ public class GrammaticalAnalysis {
         }
         candidateMap.put('#', n);
         n = n + 1;
-        System.out.println(productionMap);
-        System.out.println(candidateMap);
         table = new String[m][n];
         for (int i = 0; i < m; i++) {
             Character production = productions.get(i);
