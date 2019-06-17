@@ -11,7 +11,7 @@ public class LexicalAnalysis {
     private static char[] operatorOrDelimiter = {'=','+','-','*','/',';','(',')','#'};
 
     public static void main(String[] args) throws Exception {
-        String path="C:\\Users\\chenfu\\Documents\\1.txt";
+        String path="sources/1.txt";
         char[] chars = LexicalAnalysis.fileRead(path);
         System.out.println("********************************************************");
         chars = LexicalAnalysis.filterResource(chars);

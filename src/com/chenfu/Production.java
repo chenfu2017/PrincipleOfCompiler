@@ -2,36 +2,34 @@ package com.chenfu;
 
 public class Production {
 
-    public char P;
-    public String L;
+    private char L;
+    private String R;
 
-    public Production() {
-    }
 
-    public Production(char p, String l) {
-        P = p;
+    public Production(char l, String r) {
         L = l;
+        R = r;
     }
 
-    public char getP() {
-        return P;
-    }
-
-    public void setP(char p) {
-        P = p;
-    }
-
-    public String getL() {
+    public char getL() {
         return L;
     }
 
-    public void setL(String l) {
+    public void setL(char l) {
         L = l;
+    }
+
+    public String getR() {
+        return R;
+    }
+
+    public void setR(String r) {
+        R = r;
     }
 
     @Override
     public String toString() {
-        return "Production{ " + P +
-                "->" + L+" }";
+        return  L +
+                "->" + R ;
     }
 }

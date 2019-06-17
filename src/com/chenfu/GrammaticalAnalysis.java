@@ -11,8 +11,8 @@ public class GrammaticalAnalysis {
     private static ArrayList<String> candidates = new ArrayList<>();
     private static Map<Character, Set<Character>> firstmap = new HashMap<>();
     private static Map<Character, Set<Character>> followmap = new HashMap<>();
-    private static HashMap<Character, Integer> productionMap = new HashMap<>();
-    private static HashMap<Character, Integer> candidateMap = new HashMap<>();
+    private static HashMap<Character, Integer> lmap = new HashMap<>();
+    private static HashMap<Character, Integer> rmap = new HashMap<>();
     private static String[][] table;
 
     public static void main(String[] args) throws Exception {
@@ -121,7 +121,7 @@ public class GrammaticalAnalysis {
             char[] chars = s.toCharArray();
             for (int j = 0; j < chars.length; j++) {
                 char production = chars[j];
-                if (Character.isUpperCase(production)) {
+                if (Utils.isNonterminal(production)) {
                     getFirstMap(production);
                     if (!addFirstMap(characters, production)) {
                         break;
@@ -146,7 +146,7 @@ public class GrammaticalAnalysis {
                     index += 1;
                     while (index < candidate.length()) {
                         char followChar = candidate.charAt(index);
-                        if (!Character.isUpperCase(followChar)) {
+                        if (!Utils.isNonterminal(followChar)) {
                             characters.add(followChar);
                             break;
                         } else {
@@ -174,17 +174,19 @@ public class GrammaticalAnalysis {
         for (int i = 0; i < productions.size(); i++) {
             String candidate = candidates.get(i);
             Character production = productions.get(i);
-            productionMap.put(production, i);
+            lmap.put(production, i);
             char[] chars = candidate.toCharArray();
             for (char c : chars) {
                 if (!Character.isUpperCase(c) && c != '@' && c != '|') {
-                    candidateMap.put(c, n);
+                    rmap.put(c, n);
                     n += 1;
                 }
             }
         }
-        candidateMap.put('#', n);
+        rmap.put('#', n);
         n = n + 1;
+        System.out.println(lmap);
+        System.out.println(rmap);
         table = new String[m][n];
         for (int i = 0; i < m; i++) {
             Character production = productions.get(i);
@@ -194,7 +196,7 @@ public class GrammaticalAnalysis {
             if (firsts.contains('@')) {
                 Set<Character> follows = followmap.get(production);
                 for (Character character : follows) {
-                    int j = candidateMap.get(character);
+                    int j = rmap.get(character);
                     table[i][j] = production + "->@";
                 }
             }
@@ -205,11 +207,11 @@ public class GrammaticalAnalysis {
                 }
                 if (Character.isUpperCase(c)) {
                     for (Character character : firsts) {
-                        int j = candidateMap.get(character);
+                        int j = rmap.get(character);
                         table[i][j] = production + "->" + s;
                     }
                 } else if (firsts.contains(c)) {
-                    int j = candidateMap.get(c);
+                    int j = rmap.get(c);
                     table[i][j] = production + "->" + s;
                 }
             }
@@ -222,7 +224,7 @@ public class GrammaticalAnalysis {
             return;
         }
         for (int i = 0; i < table[0].length; i++) {
-            for (Map.Entry<Character, Integer> entry : candidateMap.entrySet()) {
+            for (Map.Entry<Character, Integer> entry : rmap.entrySet()) {
                 if (entry.getValue() == i) {
                     System.out.print(entry.getKey() + "      ");
                 }
@@ -265,8 +267,8 @@ public class GrammaticalAnalysis {
                     return;
                 }
             }else {
-                int i = productionMap.get(c);
-                int j = candidateMap.get(queue.peek());
+                int i = lmap.get(c);
+                int j = rmap.get(queue.peek());
                 String s = table[i][j];
                 if (s == null) {
                     System.out.println("ERROR");

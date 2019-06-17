@@ -11,16 +11,19 @@ import java.util.Stack;
 public class OperatorPrecedenceAnalysis {
 
     private static ArrayList<Production> productions = new ArrayList<>();
-    private static HashMap<Character, Integer> pMap = new HashMap<>();
-    private static HashMap<Character, Integer> lMap = new HashMap<>();
-    private static boolean[][] table;
+    private static HashMap<Character, Integer> lmap = new HashMap<>();
+    private static HashMap<Character, Integer> rmap = new HashMap<>();
+    private static boolean[][] firstTable;
+    private static boolean[][] lastTable;
+    private static char[][] priorityTable;
     public static void main(String[] args) {
         String path = "sources/5.txt";
         initExpression(path);
-        initTable();
-        getFirstVT();
-//        showTable();
-        showFirstVT();
+        Utils.initProductionMap(productions,lmap,rmap);
+        getVT(StrEnum.FIRSTVT);
+        getVT(StrEnum.LASTVT);
+        initPriorityTable();
+        showPriorityTable();
     }
 
     private static void initExpression(String path) {
@@ -39,50 +42,49 @@ public class OperatorPrecedenceAnalysis {
         }
     }
 
-    private static void initTable() {
-        int n =0,m=productions.size();
-        for(int i=0;i<productions.size();i++){
-            Production production = productions.get(i);
-            pMap.put(production.P,i);
-            String L = production.L;
-            char[] chars = L.toCharArray();
-            for (char c : chars) {
-                if (!Character.isUpperCase(c) && c != '@' && c != '|') {
-                    lMap.put(c, n);
-                    n += 1;
-                }
-            }
-        }
-        table = new boolean[m][n];
-    }
-
-    private static void insert(Stack stack,Production production){
-        int i = pMap.get(production.P);
-        int j = lMap.get(production.L.charAt(0));
+    private static void insert(Stack stack,boolean[][] table,Production production){
+        int i = lmap.get(production.getL());
+        int j = rmap.get(production.getR().charAt(0));
         if (!table[i][j]) {
             table[i][j]=true;
             stack.push(production);
         }
     }
 
-    private static void getFirstVT(){
+    private static void getVT(StrEnum strEnum){
+        int n,m;
+        boolean[][] table;
+        if (strEnum == StrEnum.FIRSTVT){
+            firstTable = new boolean[productions.size()][rmap.size() - 1];
+            table = firstTable;
+        }else {
+            lastTable = new boolean[productions.size()][rmap.size() - 1];
+            table= lastTable;
+        }
         Stack<Production> stack = new Stack<>();
         for (int i = 0; i < productions.size(); i++) {
             Production p = productions.get(i);
-            char P = p.P;
-            String L = p.L;
+            String L = p.getR();
             String[] strings = L.split("\\|");
             for (String s : strings) {
-                char c1 = s.charAt(0);
+                if(strEnum==StrEnum.FIRSTVT){
+                    n =0;
+                    m = n+1;
+                }else {
+                    n =s.length()-1;
+                    m= s.length()-2;
+
+                }
+                char c1 = s.charAt(n);
                 if (!Character.isUpperCase(c1)) {
-                    Production production = new Production(P,c1+"");
-                    insert(stack,production);
+                    Production production = new Production(p.getL(),c1+"");
+                    insert(stack,table,production);
                 }else {
                     if (s.length() > 1) {
-                        char c2 = s.charAt(1);
+                        char c2 = s.charAt(m);
                         if (!Character.isUpperCase(c2)) {
-                            Production production = new Production(P,c2+"");
-                            insert(stack,production);
+                            Production production = new Production(p.getL(),c2+"");
+                            insert(stack,table,production);
                         }
                     }
                 }
@@ -90,47 +92,94 @@ public class OperatorPrecedenceAnalysis {
         }
         while (!stack.empty()) {
             Production Q = stack.pop();
-            char q = Q.P;
-            String a = Q.L;
+            char q = Q.getL();
+            String a = Q.getR();
             for (int i = 0; i < productions.size(); i++) {
                 Production production = productions.get(i);
-                char P = production.P;
-                String L = production.L;
+                char P = production.getL();
+                String L = production.getR();
                 String[] strings = L.split("\\|");
                 for (String s : strings) {
                     if (q==s.charAt(0)) {
                         Production p2 = new Production(P,a);
-                        insert(stack,p2);
+                        insert(stack,table,p2);
                     }
                 }
             }
         }
+        showVT(strEnum.getType(),table);
     }
 
-    private static void showTable(){
-        for(int i=0;i<table.length;i++){
-            for (int j = 0; j < table[i].length; j++) {
-                System.out.print(table[i][j]+"  ");
-            }
-            System.out.println();
-        }
-    }
 
-    private static void showFirstVT() {
+    private static void showVT(String type,boolean[][] table) {
         for (int i = 0; i < table.length; i++) {
-            for (Map.Entry<Character, Integer> entry1 : pMap.entrySet()) {
+            for (Map.Entry<Character, Integer> entry1 : lmap.entrySet()) {
                 if(entry1.getValue()==i){
-                    System.out.print(entry1.getKey()+"{ ");
+                    System.out.print(type+"("+entry1.getKey()+") ={ ");
                     for (int j = 0; j < table[i].length; j++) {
-                        for (Map.Entry<Character, Integer> entry2 : lMap.entrySet()) {
-                            if (entry2.getValue() == j && table[i][j]) {
-                                System.out.print(entry2.getKey()+" 、");
+                        if(table[i][j]){
+                            for (Map.Entry<Character, Integer> entry2 : rmap.entrySet()) {
+                                if (entry2.getValue() == j) {
+                                    System.out.print(entry2.getKey()+" 、");
+                                }
                             }
                         }
                     }
                     System.out.println(" }");
                 }
             }
+        }
+    }
+
+    private static void  initPriorityTable(){
+        priorityTable = new char[rmap.size()][rmap.size()];
+        productions.add(new Production('E', "#E#"));
+        for (int i = 0; i < productions.size(); i++) {
+            Production production = productions.get(i);
+            char L = production.getL();
+            String R = production.getR();
+            String[] split = R.split("\\|");
+            for (String s : split) {
+                char[] chars = s.toCharArray();
+                int n = s.length()-1;
+                for (int j = 0; j < n; j++) {
+                    if (Utils.isTerminal(chars[j]) && Utils.isTerminal(chars[j + 1])) {
+                        priorityTable[rmap.get(chars[j])][rmap.get(chars[j+1])]='=';
+                    }
+                    if (j <= n - 2 && Utils.isTerminal(chars[j]) && Utils.isTerminal(chars[j + 2]) && Utils.isNonterminal(chars[j + 1])) {
+                        priorityTable[rmap.get(chars[j])][rmap.get(chars[j+2])]='=';
+                    }
+                    if (Utils.isTerminal(chars[j]) && Utils.isNonterminal(chars[j + 1])) {
+                        int  row = lmap.get(chars[j + 1]);
+                        for (int k = 0; k < firstTable[row].length; k++) {
+                            if (firstTable[row][k]) {
+                                priorityTable[rmap.get(chars[j])][k]='<';
+                            }
+                        }
+                    }
+                    if (Utils.isNonterminal(chars[j])&& Utils.isTerminal(chars[j+1])) {
+                        int  row = lmap.get(chars[j]);
+                        for (int k = 0; k < lastTable[row].length; k++) {
+                            if (lastTable[row][k]) {
+                                priorityTable[k][rmap.get(chars[j+1])]='>';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static void showPriorityTable(){
+        for (int i = 0; i < priorityTable.length; i++) {
+            for (int j = 0; j < priorityTable[i].length; j++) {
+                if (priorityTable[i][j]==0) {
+                    System.out.print("null ");
+                }else {
+                    System.out.print(priorityTable[i][j]+"    ");
+                }
+            }
+            System.out.println();
         }
     }
 }
