@@ -1,3 +1,7 @@
-begin adas int a:=b
-a ++b while end endl 10000 a10000 ldo asd# sada
-a>=c 1asd b<d qeqw$
+int a
+int b
+begin
+    a := b
+    while(a<100)
+        c++
+end

@@ -177,7 +177,7 @@ public class GrammaticalAnalysis {
             lmap.put(production, i);
             char[] chars = candidate.toCharArray();
             for (char c : chars) {
-                if (!Character.isUpperCase(c) && c != '@' && c != '|') {
+                if (Utils.isTerminal(c) && c != '@' && c != '|') {
                     rmap.put(c, n);
                     n += 1;
                 }
@@ -205,7 +205,7 @@ public class GrammaticalAnalysis {
                 if (c == '@') {
                     continue;
                 }
-                if (Character.isUpperCase(c)) {
+                if (Utils.isNonterminal(c)) {
                     for (Character character : firsts) {
                         int j = rmap.get(character);
                         table[i][j] = production + "->" + s;
@@ -261,7 +261,7 @@ public class GrammaticalAnalysis {
                     System.out.println("ERROR");
                     return;
                 }
-            } else if (!Character.isUpperCase(c)) {
+            } else if (Utils.isTerminal(c)) {
                 if (c != queue.poll()) {
                     System.out.println("ERROR");
                     return;

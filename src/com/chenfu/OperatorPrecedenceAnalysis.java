@@ -75,13 +75,13 @@ public class OperatorPrecedenceAnalysis {
 
                 }
                 char c1 = s.charAt(n);
-                if (!Character.isUpperCase(c1)) {
+                if (Utils.isTerminal(c1)) {
                     Production production = new Production(p.getL(), c1 + "");
                     insert(stack, table, production);
                 } else {
                     if (s.length() > 1) {
                         char c2 = s.charAt(m);
-                        if (!Character.isUpperCase(c2)) {
+                        if (Utils.isTerminal(c2)) {
                             Production production = new Production(p.getL(), c2 + "");
                             insert(stack, table, production);
                         }

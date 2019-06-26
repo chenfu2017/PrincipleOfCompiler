@@ -37,7 +37,7 @@ public class LexicalAnalysis {
     }
 
     public static char[] filterResource(char[] chars){
-        StringBuilder sb = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         for(int i=0;i<chars.length;i++){
             if (chars[i] == '/'&&chars[i + 1] == '/'){
                 while(chars[i]!='\n'){
@@ -52,12 +52,12 @@ public class LexicalAnalysis {
                 i+=2;
             }
             if (chars[i] != '\n'&&chars[i] != '\t'&&chars[i] != '\r'){
-                sb.append(chars[i]);
+                stringBuilder.append(chars[i]);
             }else {
-                sb.append(' ');
+                stringBuilder.append(' ');
             }
         }
-        return sb.toString().toCharArray();
+        return stringBuilder.toString().toCharArray();
     }
 
     public static boolean isReserveWord(String s){
