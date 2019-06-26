@@ -15,7 +15,7 @@ public class OperatorPrecedenceAnalysis {
     private static char[][] priorityTable;
 
     public static void main(String[] args) {
-        String path = "sources/2.txt";
+        String path = "sources/5.txt";
         initExpression(path);
         Utils.initProductionMap(productions, lmap, rmap);
         getVT(StrEnum.FIRSTVT);
