@@ -16,7 +16,7 @@ public class GrammaticalAnalysis {
     private static String[][] table;
 
     public static void main(String[] args) throws Exception {
-        String path = "sources/2.txt";
+        String path = "sources/3.txt";
         String expression = "(i*i*i)";
         initExpression(path);
         eliminateRecursion(productions, candidates);
@@ -24,7 +24,7 @@ public class GrammaticalAnalysis {
         initFollowMap();
         initTable();
         showTable(table);
-        analysis(expression);
+//        analysis(expression);
     }
 
     private static void initFirstMap() {
@@ -45,7 +45,7 @@ public class GrammaticalAnalysis {
             HashSet<Character> characters = new HashSet<>();
             followmap.put(productions.get(i), characters);
         }
-        followmap.get('E').add('#');
+        followmap.get(productions.get(0)).add('#');
         for (int i = 0; i < productions.size(); i++) {
             getFollowMap(productions.get(i));
         }
