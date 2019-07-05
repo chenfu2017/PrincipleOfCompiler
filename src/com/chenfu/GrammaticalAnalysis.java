@@ -7,8 +7,7 @@ import java.util.*;
 
 public class GrammaticalAnalysis {
 
-    private static ArrayList<Character> productions = new ArrayList<>();
-    private static ArrayList<String> candidates = new ArrayList<>();
+    private static ArrayList<Production> productions = new ArrayList<>();
     private static Map<Character, Set<Character>> firstmap = new HashMap<>();
     private static Map<Character, Set<Character>> followmap = new HashMap<>();
     private static HashMap<Character, Integer> lmap = new HashMap<>();
@@ -16,42 +15,26 @@ public class GrammaticalAnalysis {
     private static String[][] table;
 
     public static void main(String[] args) throws Exception {
-        String path = "sources/3.txt";
+        String path = "sources/2.txt";
         String expression = "(i*i*i)";
         initExpression(path);
-        eliminateRecursion(productions, candidates);
-        initFirstMap();
-        initFollowMap();
+        eliminateRecursion(productions);
+        Utils.initProductionMap(productions, lmap, rmap);
         initTable();
+        getFirstMapAndFollowMap();
+        getTable();
         showTable(table);
-//        analysis(expression);
+        analysis(expression);
     }
 
-    private static void initFirstMap() {
-        for (int i = 0; i < productions.size(); i++) {
-            HashSet<Character> characters = new HashSet<>();
-            firstmap.put(productions.get(i), characters);
-        }
-        for (int i = 0; i < productions.size(); i++) {
-            getFirstMap(productions.get(i));
-        }
-        for (Map.Entry entry : firstmap.entrySet()) {
-            System.out.println("first(" + entry.getKey() + ")=" + entry.getValue());
-        }
-    }
 
-    private static void initFollowMap() {
-        for (int i = 0; i < productions.size(); i++) {
-            HashSet<Character> characters = new HashSet<>();
-            followmap.put(productions.get(i), characters);
+    private static Production getProduction(char L) {
+        for (Production production : productions) {
+            if (production.getL() == L) {
+                return production;
+            }
         }
-        followmap.get(productions.get(0)).add('#');
-        for (int i = 0; i < productions.size(); i++) {
-            getFollowMap(productions.get(i));
-        }
-        for (Map.Entry entry : followmap.entrySet()) {
-            System.out.println("follow(" + entry.getKey() + ")=" + entry.getValue());
-        }
+        return null;
     }
 
     private static void initExpression(String path) {
@@ -61,15 +44,15 @@ public class GrammaticalAnalysis {
             String s = "";
             while ((s = bufferedReader.readLine()) != null) {
                 int i = s.indexOf('-');
-                productions.add(s.charAt(0));
-                candidates.add(s.substring(i + 2));
+                Production p = new Production(s.charAt(0), s.substring(i + 2));
+                productions.add(p);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void eliminateRecursion(ArrayList<Character> productions, ArrayList<String> candidates) {
+    private static void eliminateRecursion(ArrayList<Production> productions) {
         String chars = "QWERTYUUIOPASDFGHJKLZXCVBNM";
         char[] charsarray = chars.toCharArray();
         ArrayList<Character> characters = new ArrayList<>();
@@ -78,28 +61,50 @@ public class GrammaticalAnalysis {
         }
         characters.removeAll(productions);
         for (int i = 0; i < productions.size(); i++) {
-            Character production = productions.get(i);
-            String candidate = candidates.get(i);
-            Character sc = candidate.charAt(0);
-            if (sc.equals(production)) {
-                int index = candidate.indexOf('|');
-                String s1 = candidate.substring(index + 1);
+            Production production = productions.get(i);
+            char L = production.getL();
+            String R = production.getR();
+            if (L == R.charAt(0)) {
+                int index = R.indexOf('|');
+                String s1 = R.substring(index + 1);
                 Character character = characters.get(0);
                 characters.remove(0);
-                String s2 = character.toString();
-                String s3 = candidate.substring(1, index) + s2 + "|@";
-                candidates.set(i, s1 + s2);
-                productions.add(character);
-                candidates.add(s3);
-
+                char s2 = character;
+                String s3 = R.substring(1, index) + s2 + "|@";
+                production.setR(s1 + s2);
+                Production p = new Production(character, s3);
+                productions.add(p);
             }
         }
-        for (int i = 0; i < productions.size(); i++) {
-            System.out.println(productions.get(i) + "->" + candidates.get(i));
+        for (Production production : productions) {
+            System.out.println(production);
         }
     }
 
-    private static boolean addFirstMap(Set<Character> characters, char c) {
+    private static void getFirstMapAndFollowMap() {
+        for (Production production : productions) {
+            char L = production.getL();
+            Set<Character> firstSet = new HashSet<>();
+            firstmap.put(L, firstSet);
+            Set<Character> followSet = new HashSet<>();
+            followmap.put(L, followSet);
+        }
+        for (Production production : productions) {
+            getFirstMap(production);
+        }
+        for (Map.Entry entry : firstmap.entrySet()) {
+            System.out.println("first(" + entry.getKey() + ")=" + entry.getValue());
+        }
+        followmap.get(productions.get(0).getL()).add('#');
+        for (Production production : productions) {
+            getFollowMap(production.getL());
+        }
+        for (Map.Entry entry : followmap.entrySet()) {
+            System.out.println("follow(" + entry.getKey() + ")=" + entry.getValue());
+        }
+    }
+
+    private static boolean hasEepsilonAndMergeMap(Set<Character> characters, char c) {
         boolean hasEepsilon = false;
         Set<Character> set = firstmap.get(c);
         for (Character f : set) {
@@ -112,22 +117,27 @@ public class GrammaticalAnalysis {
         return hasEepsilon;
     }
 
-    private static void getFirstMap(char c) {
-        Set<Character> characters = firstmap.get(c);
-        int i = productions.indexOf(c);
-        String candidate = candidates.get(i);
-        String[] strings = candidate.split("\\|");
+    private static void getFirstMap(Production production) {
+        char L = production.getL();
+        String R = production.getR();
+        Set<Character> firstSet = firstmap.get(L);
+        String[] strings = R.split("\\|");
         for (String s : strings) {
             char[] chars = s.toCharArray();
             for (int j = 0; j < chars.length; j++) {
-                char production = chars[j];
-                if (Utils.isNonterminal(production)) {
-                    getFirstMap(production);
-                    if (!addFirstMap(characters, production)) {
+                char c = chars[j];
+                if (Utils.isNonterminal(c)) {
+                    Production p = getProduction(c);
+                    getFirstMap(p);
+                    if (hasEepsilonAndMergeMap(firstSet, p.getL())) {
+                        if (j == chars.length - 1) {
+                            firstSet.add('@');
+                        }
+                    } else {
                         break;
                     }
                 } else {
-                    characters.add(production);
+                    firstSet.add(c);
                     break;
                 }
             }
@@ -135,33 +145,33 @@ public class GrammaticalAnalysis {
     }
 
     private static void getFollowMap(char c) {
-        Set<Character> characters = followmap.get(c);
+        Set<Character> followSet = followmap.get(c);
         String sc = String.valueOf(c);
-        for (int i = 0; i < candidates.size(); i++) {
-            String candidates = GrammaticalAnalysis.candidates.get(i);
-            String[] strings = candidates.split("\\|");
-            for (String candidate : strings) {
+        for (Production production : productions) {
+            char L = production.getL();
+            String R = production.getR();
+            String[] strings = R.split("\\|");
+            for (String s : strings) {
                 int index = 0;
-                while ((index = candidate.indexOf(sc, index)) != -1) {
+                while ((index = s.indexOf(sc, index)) != -1) {
                     index += 1;
-                    while (index < candidate.length()) {
-                        char followChar = candidate.charAt(index);
-                        if (!Utils.isNonterminal(followChar)) {
-                            characters.add(followChar);
+                    while (index < s.length()) {
+                        char followChar = s.charAt(index);
+                        if (Utils.isTerminal(followChar)) {
+                            followSet.add(followChar);
                             break;
                         } else {
-                            if (!addFirstMap(characters, followChar)) {
+                            if (!hasEepsilonAndMergeMap(followSet, followChar)) {
                                 break;
                             }
                             index += 1;
                         }
                     }
-                    if (index == candidate.length()) {
-                        Character production = productions.get(i);
-                        if (c != production) {
-                            getFollowMap(production);
-                            Set<Character> fet = followmap.get(production);
-                            characters.addAll(fet);
+                    if (index == s.length()) {
+                        if (c != L) {
+                            getFollowMap(L);
+                            Set<Character> fet = followmap.get(L);
+                            followSet.addAll(fet);
                         }
                     }
                 }
@@ -170,49 +180,54 @@ public class GrammaticalAnalysis {
     }
 
     private static void initTable() {
-        int n = 0, m = productions.size();
-        for (int i = 0; i < productions.size(); i++) {
-            String candidate = candidates.get(i);
-            Character production = productions.get(i);
-            lmap.put(production, i);
-            char[] chars = candidate.toCharArray();
-            for (char c : chars) {
-                if (Utils.isTerminal(c) && c != '@' && c != '|') {
-                    rmap.put(c, n);
-                    n += 1;
-                }
+        int n = lmap.size(), m = rmap.size();
+        table = new String[n][m];
+    }
+
+    private static void addToTable(char L, char c, String R) {
+        int row = lmap.get(L);
+        int col = rmap.get(c);
+        table[row][col] = L + "->" + R;
+    }
+
+    private static boolean batchAddToTable(char L, Set<Character> characters, String s) {
+        boolean hasEepsilon = false;
+        for (Character character : characters) {
+            if (character == '@') {
+                hasEepsilon = true;
+            } else {
+                addToTable(L, character, s);
             }
         }
-        rmap.put('#', n);
-        n = n + 1;
-        System.out.println(lmap);
-        System.out.println(rmap);
-        table = new String[m][n];
-        for (int i = 0; i < m; i++) {
-            Character production = productions.get(i);
-            String strcandidates = candidates.get(i);
-            String[] strings = strcandidates.split("\\|");
-            Set<Character> firsts = firstmap.get(production);
-            if (firsts.contains('@')) {
-                Set<Character> follows = followmap.get(production);
-                for (Character character : follows) {
-                    int j = rmap.get(character);
-                    table[i][j] = production + "->@";
-                }
-            }
-            for (String s : strings) {
-                char c = s.charAt(0);
-                if (c == '@') {
-                    continue;
-                }
-                if (Utils.isNonterminal(c)) {
-                    for (Character character : firsts) {
-                        int j = rmap.get(character);
-                        table[i][j] = production + "->" + s;
+        return hasEepsilon;
+    }
+
+    private static void getTable() {
+        for (Production production : productions) {
+            char L = production.getL();
+            String R = production.getR();
+            String[] split = R.split("\\|");
+            for (String s : split) {
+                char[] chars = s.toCharArray();
+                for (int i = 0; i < chars.length; i++) {
+                    char c = chars[i];
+                    if (c == '@') {
+                        Set<Character> followSet = followmap.get(L);
+                        batchAddToTable(L, followSet, s);
+                    } else if (Utils.isTerminal(c)) {
+                        addToTable(L, c, s);
+                        break;
+                    } else {
+                        Set<Character> firstSet = firstmap.get(c);
+                        if (batchAddToTable(L, firstSet, s)) {
+                            if (i == chars.length - 1) {
+                                Set<Character> followSet = followmap.get(L);
+                                batchAddToTable(L, followSet, s);
+                            }
+                        } else {
+                            break;
+                        }
                     }
-                } else if (firsts.contains(c)) {
-                    int j = rmap.get(c);
-                    table[i][j] = production + "->" + s;
                 }
             }
         }
@@ -251,10 +266,10 @@ public class GrammaticalAnalysis {
         boolean flag = true;
         int count = 0;
         while (flag) {
-            count ++;
-            System.out.println(String.format("%-12d%-36s%24s",count,stack,queue));
+            count++;
+            System.out.println(String.format("%-12d%-36s%24s", count, stack, queue));
             Character c = stack.pop();
-            if(c=='#') {
+            if (c == '#') {
                 if (c == queue.poll()) {
                     flag = false;
                 } else {
@@ -266,18 +281,24 @@ public class GrammaticalAnalysis {
                     System.out.println("ERROR");
                     return;
                 }
-            }else {
-                int i = lmap.get(c);
-                int j = rmap.get(queue.peek());
-                String s = table[i][j];
+            } else {
+                String s = null;
+                try {
+                    int i = lmap.get(c);
+                    int j = rmap.get(queue.peek());
+                    s = table[i][j];
+                }catch (NullPointerException e){
+                    System.out.println("ERROR");
+                    return;
+                }
                 if (s == null) {
                     System.out.println("ERROR");
                     return;
                 }
-                s=s.substring(s.indexOf('>')+1);
-                if(!s.equals("@")){
+                s = s.substring(s.indexOf('>') + 1);
+                if (!s.equals("@")) {
                     char[] toCharArray = s.toCharArray();
-                    for(int k = toCharArray.length-1;k>=0;k--){
+                    for (int k = toCharArray.length - 1; k >= 0; k--) {
                         stack.push(toCharArray[k]);
                     }
                 }

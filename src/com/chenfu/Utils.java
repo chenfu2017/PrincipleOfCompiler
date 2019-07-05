@@ -14,8 +14,10 @@ public class Utils {
             char[] chars = L.toCharArray();
             for (char c : chars) {
                 if (isTerminal(c) && c != '@' && c != '|') {
-                    rmap.put(c, n);
-                    n += 1;
+                    if (!rmap.containsKey(c)) {
+                        rmap.put(c, n);
+                        n += 1;
+                    }
                 }
             }
         }
