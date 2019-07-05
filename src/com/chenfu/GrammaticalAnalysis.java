@@ -257,7 +257,7 @@ public class GrammaticalAnalysis {
             queue.add(expression.charAt(i));
         }
         stack.push('#');
-        stack.push('E');
+        stack.push(productions.get(0).getL());
         boolean flag = true;
         int count = 0;
         while (flag) {
