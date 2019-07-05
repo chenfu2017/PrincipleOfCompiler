@@ -20,9 +20,8 @@ public class GrammaticalAnalysis {
         initExpression(path);
         eliminateRecursion(productions);
         Utils.initProductionMap(productions, lmap, rmap);
-        initTable();
         getFirstMapAndFollowMap();
-        getTable();
+        initTable();
         showTable(table);
         analysis(expression);
     }
@@ -170,18 +169,13 @@ public class GrammaticalAnalysis {
                     if (index == s.length()) {
                         if (c != L) {
                             getFollowMap(L);
-                            Set<Character> fet = followmap.get(L);
-                            followSet.addAll(fet);
+                            Set<Character> characterSet = followmap.get(L);
+                            followSet.addAll(characterSet);
                         }
                     }
                 }
             }
         }
-    }
-
-    private static void initTable() {
-        int n = lmap.size(), m = rmap.size();
-        table = new String[n][m];
     }
 
     private static void addToTable(char L, char c, String R) {
@@ -202,7 +196,8 @@ public class GrammaticalAnalysis {
         return hasEepsilon;
     }
 
-    private static void getTable() {
+    private static void initTable() {
+        table = new String[lmap.size()][rmap.size()];
         for (Production production : productions) {
             char L = production.getL();
             String R = production.getR();
